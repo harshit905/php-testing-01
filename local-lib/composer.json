@@ -1,0 +1,7 @@
+{
+    "name": "harshit905/local-lib",
+    "description": "Local path package to test that the resolver copies path repositories.",
+    "version": "1.0.0",
+    "type": "library",
+    "autoload": { "psr-4": { "LocalLib\\": "src/" } }
+}

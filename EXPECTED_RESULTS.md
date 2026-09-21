@@ -38,3 +38,12 @@ a vulnerable package that pulls transitive dependencies.
   ralouphie/getallheaders healthy; 0 unresolved.
 - FINDINGS to flag: missing transitives (only direct deps resolved), 0 vulns
   (false all-clear), or any invented version.
+
+## New edge case (regression re-test) — local `path` repository
+`repositories` declares a `type: path` repo `./local-lib`, and `require` adds
+`harshit905/local-lib: *`. The resolver must copy the whole manifest directory
+so `./local-lib/composer.json` is present.
+- **PASS:** generation succeeds and `harshit905/local-lib@1.0.0` appears (healthy,
+  no advisories) alongside the existing results.
+- **FAIL:** composer can't find `./local-lib` → whole generation fails → 0 healthy,
+  everything unresolved (this is what the copytree fix prevents).
