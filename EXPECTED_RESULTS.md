@@ -1,34 +1,40 @@
-# Expected SCA results — ground truth (PHP)
+# Expected SCA results — ground truth (PHP, richer worst case)
+
+Lock-less (no `composer.lock`), so the scanner generates one with `composer
+update --no-install`. Worst-case element: a **broken `require-dev`**
+(`phpunit/phpunit: ^999.0.0`, which does not exist) that must be stripped, plus
+a vulnerable package that pulls transitive dependencies.
 
 ## Summary
 
-| bucket | count | packages |
-|--------|-------|----------|
-| Vulnerable | 1 | `phpmailer/phpmailer@6.0.0` |
-| Healthy | 1 | `psr/log@1.1.4` |
-| Unresolved | 0 | — |
-
-Both production packages have no other package dependencies, so the resolved set
-is exactly these two.
+| bucket | packages |
+|--------|----------|
+| Vulnerable | `phpmailer/phpmailer@6.0.0`, `guzzlehttp/psr7@1.6.0` |
+| Healthy | `psr/log@1.1.4`, `psr/http-message@1.x`, `ralouphie/getallheaders@3.x` |
+| Unresolved | none |
 
 ## Vulnerabilities
-- **`phpmailer/phpmailer@6.0.0`** — old, multiple advisories. Expect several,
-  likely including `CVE-2020-13625` (Content-Type escaping), `CVE-2021-3603`
-  (object injection), `CVE-2021-34551`. Fixed in 6.5.0. Pass condition: phpmailer
-  shows one or more advisories, all for version 6.0.0.
+- **`phpmailer/phpmailer@6.0.0`** — multiple advisories (`CVE-2020-13625`,
+  `CVE-2021-3603`, `CVE-2021-34551`). Zero package dependencies.
+- **`guzzlehttp/psr7@1.6.0`** — improper header parsing, `CVE-2022-24775`
+  (`GHSA-q559-8m2m-g86r`), fixed in 1.8.4. This one has dependencies (below).
 
-## Healthy
-- **`psr/log@1.1.4`** — the range `^1.1` resolves to `1.1.4` (latest 1.x), no
-  advisories. This checks range generation.
+## Healthy — includes transitives (the new thing to analyze)
+- **`psr/log@1.1.4`** — range `^1.1` resolves to 1.1.4, no advisories.
+- **`psr/http-message`** and **`ralouphie/getallheaders`** — transitive
+  dependencies of `guzzlehttp/psr7`, pulled in only by generation, both healthy.
+  Their presence proves the scanner discovered transitives, not just direct deps.
 
-## The worst-case element
+## Worst-case feature — broken `require-dev`
 `require-dev` names `phpunit/phpunit: ^999.0.0`, which does not exist.
-- **PASS (require-dev stripped):** production resolves → 1 vuln + 1 healthy above.
+- **PASS (require-dev stripped):** production tree resolves → the two vulns and
+  the healthy set above.
 - **FAIL (require-dev NOT stripped):** `composer update` cannot resolve
-  `^999.0.0` → whole generation fails → **0 healthy, both production packages
-  unresolved, 0 vulnerabilities.** That "0 vulnerabilities" is a false all-clear.
+  `^999.0.0` → whole generation fails → **0 healthy, everything unresolved, 0
+  vulnerabilities** (a false all-clear).
 
 ## Pass / fail
-- PASS: `phpmailer/phpmailer@6.0.0` vulnerable, `psr/log@1.1.4` healthy.
-- FAIL: 0 healthy, packages unresolved, 0 vulns (a false all-clear), or any
-  invented version.
+- PASS: phpmailer and psr7 vulnerable; psr/log, psr/http-message,
+  ralouphie/getallheaders healthy; 0 unresolved.
+- FINDINGS to flag: missing transitives (only direct deps resolved), 0 vulns
+  (false all-clear), or any invented version.
