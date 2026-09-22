@@ -3,9 +3,12 @@
     "description": "Controlled lock-less composer.json SCA worst-case test.",
     "type": "project",
     "require": {
+        "php": ">=7.4",
+        "ext-json": "*",
         "phpmailer/phpmailer": "6.0.0",
         "guzzlehttp/psr7": "1.6.0",
         "psr/log": "^1.1",
+        "monolog/monolog": "^2.0 || ^3.0",
         "harshit905/local-lib": "*"
     },
     "require-dev": {
@@ -16,5 +19,10 @@
             "type": "path",
             "url": "./local-lib"
         }
-    ]
+    ],
+    "config": {
+        "platform": {
+            "php": "7.4.0"
+        }
+    }
 }
